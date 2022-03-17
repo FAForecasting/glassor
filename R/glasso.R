@@ -2,6 +2,7 @@
 #' @param s The observed covariance matrix
 #' @param rho The regularisation parameter for the lasso
 #' @param nobs The number of observations, needed to calculate the log likelihood
+#' @export
 glassor <- function (s, rho, nobs=NULL, threshold=1e-4, maxit=1e4,
                      approx=FALSE, penalize.diagonal=TRUE,
                      start=c("cold","warm"), w.init=NULL, wi.init=NULL, trace=FALSE) {
@@ -38,6 +39,11 @@ glassor <- function (s, rho, nobs=NULL, threshold=1e-4, maxit=1e4,
   return(res)
 }
 
+#' Graphical lasso, based on the Fortran version by Tibshirani et. al.
+#' @param s The observed covariance matrix
+#' @param rho The regularisation parameter for the lasso
+#' @param nobs The number of observations, needed to calculate the log likelihood
+#' @export
 glassorpath <- function (s, rho, nobs=NULL, threshold=1e-4, maxit=1e4,
                          approx=FALSE, penalize.diagonal=TRUE,
                          start=c("cold","warm"), w.init=NULL, wi.init=NULL, trace=FALSE, parallel=FALSE) {
