@@ -1,8 +1,8 @@
 
 
-glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, threshold, maxit, www, wwwi, niter, ddel) {
+glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, threshold, maxit, W, W.inv) {
   if (approx) {
-    res <- lasinv1(nn, s, rrho, approx, warm.start, trace, penalize.diag, threshold, maxit, www, wwwi, niter)
+    res <- lasinv1(nn, s, rrho, approx, warm.start, trace, penalize.diag, threshold, maxit, W, W.inv, 1)
     return(res)
   } else {
     # 10021
@@ -10,6 +10,7 @@ glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, thre
     nc <- res$nc
     ic <- res$ic
     ir <- res$ir
+
     nnq <- 0
     for (kc in 1:nc) {
       nnq <- max(ic[2,kc] - ic[1,kc]+1, nnq)
@@ -29,24 +30,24 @@ glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, thre
       n <- ic[2, kc] - ic[1, kc]+1
       if (n <= 1) {
         k <- ir[ic[1, kc]]
-        www[,k] <- 0
-        www[k,] <- 0
-        wwwi[,k] <- 0
-        wwwi[k,] <- 0
+        W[, k] <- 0
+        W[k,] <- 0
+        W.inv[, k] <- 0
+        W.inv[k,] <- 0
       } else {
         # 10061
-        kb <- ic[1, kc]
-        ke <- ic[2, kc]
+        kbegin <- ic[1, kc]
+        kend <- ic[2, kc]
         l <- 0
-        for (k in kb:ke) {
+        for (k in kbegin:kend) {
           ik <- ir[k]
-          for (j in kb:ke) {
+          for (j in kbegin:kend) {
             ij <- ir[j]
             l <- l+1
             ss[l] <- s[ij, ik]
             rho[l] <- rrho[ij,ik]
-            ww[l] <- www[ij,ik]
-            wwi[l] <- wwwi[ij,ik]
+            ww[l] <- W[ij, ik]
+            wwi[l] <- W.inv[ij, ik]
           }
           #10081
         }
@@ -56,56 +57,52 @@ glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, thre
         wwi <- res$wwi
         niter <- res$niter + 1
         ddel <- ddel + res$del
-        for (j in kb:ke) {
+        for (j in kbegin:kend) {
           k <- ir[j]
-          www[,k] <- 0
-          www[k,] <- 0
-          wwwi[,k] <- 0
-          wwwi[k,] <- 0
+          W[, k] <- 0
+          W[k,] <- 0
+          W.inv[, k] <- 0
+          W.inv[k,] <- 0
         }
         #10091
         l <- 0
-        for (k in kb:ke) {
+        for (k in kbegin:kend) {
           ik <- ir[k]
-          for (j in kb:ke) {
+          for (j in kbegin:kend) {
             l <- l+1
-            wwwi[ir[j], ik] <- wwi[l]
+            W.inv[ir[j], ik] <- wwi[l]
           }
         }
         #10111
-        if (!approx) {
-          l <- 0
-          for (k in kb:ke) {
-            ik <- ir[k]
-            for (j in kb:ke) {
-              l <- l+1
-              www[ir[j],ik] <- ww[l]
-            }
+        l <- 0
+        for (k in kbegin:kend) {
+          ik <- ir[k]
+          for (j in kbegin:kend) {
+            l <- l+1
+            W[ir[j], ik] <- ww[l]
           }
         }
       }
     }
     # 10041
     ddel <- ddel/nc
-    if (!approx) {
-      for (j in 1:nn) {
-        if (www[j,j] == 0) {
-          if (penalize.diag == 0) {
-            www[j,j] <- s[j, j]
-          } else {
-            www[j,j] <- s[j, j] + rrho[j, j]
-          }
-          wwwi[j,j] <- 1 / www[j,j]
+    for (j in 1:nn) {
+      if (W[j, j] == 0) {
+        if (penalize.diag == 0) {
+          W[j, j] <- s[j, j]
+        } else {
+          W[j, j] <- s[j, j] + rrho[j, j]
         }
+        W.inv[j, j] <- 1 / W[j, j]
       }
     }
   }
-  return(list(www=www, wwwi=wwwi, del=ddel, niter=niter))
+  return(list(www=W, wwwi=W.inv, del=ddel, niter=niter))
 }
 
 
 
-connect <- function (n, ss, rho) {
+connect <- function (n, S, rho) {
   ic <- matrix(0,2, n)
   ir <- numeric(n)
   ie <- numeric(n)
@@ -116,42 +113,37 @@ connect <- function (n, ss, rho) {
       ir[is] <- k
       nc <- nc + 1
       ie[k] <- nc
-      ic[1,nc] <- is
-      is <- is+1
-      res <- row(nc,1, ir[(is-1):n], n, ss, rho, ie, na, ir[is:n])
+      ic[1, nc] <- is
+      is <- is + 1
+
+      res <- row(nc, 1, ir[(is-1):n], n, S, rho, ie, ir[is:n])
       ie <- res$ie
-      na <- res$na
       ir[is:n] <- res$ir
-      if (na == 0) {
-        ic[2,nc] <- is-1
-      } else {
-        while (TRUE) {
-          nas <- na
-          iss <- is
-          il <- iss + nas - 1
-          if (il > n) break
-          is <- is + na
-          res <- row(nc, nas, ir[iss:n], n, ss, rho, ie, na, ir[is:n])
-          ie <- res$ie
-          na <- res$na
-          ir[is:n] <- res$ir
-          if (na == 0) break
-        }
-        #10252
-        ic[2, nc] <- il
+
+      il <- is - 1
+      while (res$na != 0) {
+        iss <- is
+        il <- is + res$na - 1
+        if (il >= n) break
+        is <- is + res$na
+        res <- row(nc, res$na, ir[iss:n], n, S, rho, ie, ir[is:n])
+        ie <- res$ie
+        ir[is:n] <- res$ir
       }
+      #10252
+      ic[2, nc] <- il
     }
   }
   return(list(nc=nc, ic=ic, ir=ir))
 }
 
-row <- function (nc, nr, jr, n, ss, rho, ie, na, kr) {
+row <- function (nc, nr, jr, n, ss, rho, ie, kr) {
   na <- 0
   for (l in 1:nr) {
     k <- jr[l]
     for (j in 1:n) {
-      if (ie[j] <= 0 && j != k && abs(ss[j,k]) > rho[j,k]) {
-        na <- na+1
+      if (ie[j] <= 0 && j != k && abs(ss[j, k]) > rho[j, k]) {
+        na <- na + 1
         kr[na] <- j
         ie[j] <- nc
       }
@@ -160,8 +152,8 @@ row <- function (nc, nr, jr, n, ss, rho, ie, na, kr) {
   return(list(ie=ie, na=na, ir=kr))
 }
 
-lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, threshold, maxit, ww, wwi, niter) {
-  ss <- matrix(ss, n, n)
+lasinv1 <- function (n, S, rho, approx, warm.start, trace, penalize.diag, threshold, maxit, ww, wwi, niter) {
+  S <- matrix(S, n, n)
   ww <- matrix(ww, n, n)
   wwi <- matrix(wwi, n, n)
   rho <- matrix(rho, n, n)
@@ -171,14 +163,10 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
   vv <- matrix(0, nm1, nm1)
   if (!approx) xs <- matrix(0, nm1, n)
   s <- numeric(nm1)
-  s0 <- numeric(nm1)
   x <- numeric(nm1)
   z <- numeric(nm1)
   mm <- numeric(nm1)
   ro <- numeric(nm1)
-  if (!approx) {
-    ws <- numeric(n)
-  }
 
   #10291
   # Calculate the sum of the absolute values for S^-diag
@@ -186,7 +174,7 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
   for (j in 1:n) {
     for (k in 1:n) {
       if (j != k) {
-        shr <- shr + abs(ss[j,k])
+        shr <- shr + abs(S[j, k])
       }
     }
   }
@@ -197,9 +185,9 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
     wwi[,] <- 0
       for (j in 1:n) {
         if (penalize.diag == 0) {
-          ww[j,j] <- ss[j,j]
+          ww[j,j] <- S[j, j]
         } else {
-          ww[j,j] <- ss[j,j] + rho[j,j]
+          ww[j,j] <- S[j, j] + rho[j, j]
         }
         wwi[j,j] <- 1.0 / max(ww[j,j], eps)
       }
@@ -211,7 +199,7 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
   if (approx) {
     if (warm.start == 0) wwi[,] <- 0
     for (m in 1:n) {
-      res <- setup(m, n, ss, rho, ss, vv, s, ro)
+      res <- setup(m, n, S, rho, S, vv, s, ro)
       vv <- res$vv
       s <- res$s
       ro <- res$r
@@ -239,8 +227,8 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
     niter <- 1
     return(list(ww=ww, wwi=wwi, del=del, niter=niter))
   }
-  if (warm.start == 0) {
-    ww <- ss
+  if (!warm.start) {
+    ww <- S
     xs[,] <- 0
   } else {
     for (j in 1:n) {
@@ -258,9 +246,9 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
 
   for (j in 1:n) {
     if (penalize.diag == 0) {
-      ww[j,j] <- ss[j,j]
+      ww[j,j] <- S[j, j]
     } else {
-      ww[j,j] <- ss[j,j] + rho[j,j]
+      ww[j,j] <- S[j, j] + rho[j, j]
     }
   }
 
@@ -270,12 +258,12 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
   while (dlx < shr && niter < maxit) {
     dlx <- 0
     for (m in 1:n) {
-      if (trace != 0) {
+      if (trace) {
         cat("m: ", m, "\n")
       }
       x <- xs[, m]
       ws <- ww[, m]
-      res <- setup(m, n, ss, rho, ww, vv, s, ro)
+      res <- setup(m, n, S, rho, ww, vv, s, ro)
       vv <- res$vv
       s <- res$s
       ro <- res$r
@@ -304,18 +292,18 @@ lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, thres
   return(list(ww=ww, wwi=wwi, del=del, niter=niter))
 }
 
-setup <- function (m,n,ss,rho,ww,vv,s,r) {
+setup <- function (m, n, S, rho, W, vv, s, r) {
   l <- 0
   for (j in 1:n) {
     if (j != m) {
       l <- l + 1
       r[l] <- rho[j,m]
-      s[l] <- ss[j,m]
+      s[l] <- S[j, m]
       i <- 0
       for (k in 1:n) {
         if (k != m) {
           i <- i + 1
-          vv[i,l] <- ww[k,j]
+          vv[i,l] <- W[k, j]
         }
       }
     }
@@ -366,7 +354,7 @@ fatmul <- function (it, n, vv, x, s, z, m) {
 
   #10611
 
-  if (l > fac*n) {
+  if (l > fac * n) {
     if (it == 1) {
       s <- vv %*% x
     } else {
