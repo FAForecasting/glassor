@@ -368,18 +368,18 @@ fatmul <- function (it,n,vv,x,s,z,m) {
 
   if (l > fac*n) {
     if (it == 1) {
-      s <- matmul[vv,x]
+      s <- vv %*% x
     } else {
-      s <- s - matmul[vv,x]
+      s <- s - vv %*% x
     }
   } else {
     if (it == 1) {
       for (j in 1:n) {
-        s[j] <- dot_product(vv[j, m[1:l]], x[1:l])
+        s[j] <- dot_product(vv[j, m[1:l]], z[1:l])
       }
     } else {
       for (j in 1:n) {
-        s[j] <- s[j] - dot_product(vv[m[1:l],j],z[1:l])
+        s[j] <- s[j] - dot_product(vv[m[1:l],j], z[1:l])
       }
     }
   }
@@ -394,12 +394,14 @@ inv <- function (n, ww, xs, wwi) {
   wwi[n,n]  <- 1/ (ww[n,n] + dot_product(xs[,n],ww[1:nm1,n]))
   wwi[1:nm1,n] <- wwi[n,n] * xs[,n]
 
-  for (j in 2:nm1) {
-    jm1 <- j-1
-    jp1 <- j+1
-    wwi[j,j] <- 1 / (ww[j,j] + dot_product(xs[1:jm1,j], ww[1:jm1,j]) + dot_product(xs[j:nm1,j],ww[jp1:n,j]))
-    wwi[1:jm1,j] <- wwi[j,j] * xs[1:jm1,j]
-    wwi[jp1:n,j] <- wwi[j,j] * xs[j:nm1,j]
+  if (nm1 >= 2) {
+    for (j in 2:nm1) {
+      jm1 <- j-1
+      jp1 <- j+1
+      wwi[j,j] <- 1 / (ww[j,j] + dot_product(xs[1:jm1,j], ww[1:jm1,j]) + dot_product(xs[j:nm1,j],ww[jp1:n,j]))
+      wwi[1:jm1,j] <- wwi[j,j] * xs[1:jm1,j]
+      wwi[jp1:n,j] <- wwi[j,j] * xs[j:nm1,j]
+    }
   }
   return(wwi)
 }
