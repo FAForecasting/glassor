@@ -1,8 +1,10 @@
 lasinv1 <- function (n, S, rho, approx, warm.start, trace, penalize.diag, threshold, maxit, W, W.inverse, iter) {
-  S <- matrix(S, n, n)
-  W <- matrix(W, n, n)
-  W.inverse <- matrix(W.inverse, n, n)
-  rho <- matrix(rho, n, n)
+  # TODO: It is a bit strange that S is passed of the wrong length.
+  # TODO: This is however equivalent to what happens in the Fortran implementation.
+  S <- matrix(S[seq_len(n^2)], n, n)
+  W <- matrix(W[seq_len(n^2)], n, n)
+  W.inverse <- matrix(W.inverse[seq_len(n^2)], n, n)
+  rho <- matrix(rho[seq_len(n^2)], n, n)
 
   eps <- 1e-7
   nm1 <- n - 1
