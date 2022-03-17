@@ -15,14 +15,14 @@ glassof <- function (s, rho, thr=1.0e-4, maxit=1e4, approx=FALSE, penalize.diago
 }
 
 set.seed(124)
-mat <- matrix(rnorm(3*14), 14)
+mat <- matrix(rnorm(5*14), 14)
 
 varm <- var(mat)
 
 res2 <- glasso::glasso(varm, 0.1)
 res <- glassof(varm, 0.1)
 
-res$www - res2$w
+max(res$www - res2$w)
 res$wwwi - res2$wi
 
 solve(res2$w) - res2$wi

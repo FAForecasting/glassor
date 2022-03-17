@@ -1,7 +1,7 @@
 
 
 glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, threshold, maxit, www, wwwi, niter, ddel) {
-  if (approx != 0) {
+  if (approx) {
     res <- lasinv1(nn, s, rrho, approx, warm.start, trace, penalize.diag, threshold, maxit, www, wwwi, niter)
     return(res)
   } else {
@@ -66,13 +66,14 @@ glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, thre
         #10091
         l <- 0
         for (k in kb:ke) {
+          ik <- ir[k]
           for (j in kb:ke) {
             l <- l+1
             wwwi[ir[j], ik] <- wwi[l]
           }
         }
         #10111
-        if (approx == 0) {
+        if (!approx) {
           l <- 0
           for (k in kb:ke) {
             ik <- ir[k]
@@ -86,7 +87,7 @@ glassor <- function (nn, s, rrho, approx, warm.start, trace, penalize.diag, thre
     }
     # 10041
     ddel <- ddel/nc
-    if (approx == 0) {
+    if (!approx) {
       for (j in 1:nn) {
         if (www[j,j] == 0) {
           if (penalize.diag == 0) {
@@ -159,7 +160,7 @@ row <- function (nc, nr, jr, n, ss, rho, ie, na, kr) {
   return(list(ie=ie, na=na, ir=kr))
 }
 
-lasinv1 <- function (n, ss, rho, approx, is, trace, penalize.diag, threshold, maxit, ww, wwi, niter) {
+lasinv1 <- function (n, ss, rho, approx, warm.start, trace, penalize.diag, threshold, maxit, ww, wwi, niter) {
   ss <- matrix(ss, n, n)
   ww <- matrix(ww, n, n)
   wwi <- matrix(wwi, n, n)
@@ -168,14 +169,14 @@ lasinv1 <- function (n, ss, rho, approx, is, trace, penalize.diag, threshold, ma
   eps <- 1e-7
   nm1 <- n - 1
   vv <- matrix(0, nm1, nm1)
-  if (approx == 0) xs <- matrix(0, nm1, n)
+  if (!approx) xs <- matrix(0, nm1, n)
   s <- numeric(nm1)
   s0 <- numeric(nm1)
   x <- numeric(nm1)
   z <- numeric(nm1)
   mm <- numeric(nm1)
   ro <- numeric(nm1)
-  if (approx == 0) {
+  if (!approx) {
     ws <- numeric(n)
   }
 
@@ -207,8 +208,8 @@ lasinv1 <- function (n, ss, rho, approx, is, trace, penalize.diag, threshold, ma
   #10331
   shr <- threshold * shr / nm1
 
-  if (approx != 0) {
-    if (is == 0) wwi[,] <- 0
+  if (approx) {
+    if (warm.start == 0) wwi[,] <- 0
     for (m in 1:n) {
       res <- setup(m, n, ss, rho, ss, vv, s, ro)
       vv <- res$vv
@@ -238,7 +239,7 @@ lasinv1 <- function (n, ss, rho, approx, is, trace, penalize.diag, threshold, ma
     niter <- 1
     return(list(ww=ww, wwi=wwi, del=del, niter=niter))
   }
-  if (is == 0) {
+  if (warm.start == 0) {
     ww <- ss
     xs[,] <- 0
   } else {
@@ -267,6 +268,7 @@ lasinv1 <- function (n, ss, rho, approx, is, trace, penalize.diag, threshold, ma
   niter <- 0
   dlx <- 0
   while (dlx < shr && niter < maxit) {
+    dlx <- 0
     for (m in 1:n) {
       if (trace != 0) {
         cat("m: ", m, "\n")
@@ -350,7 +352,7 @@ fsign <- function (x, y) {
   else -x
 }
 
-fatmul <- function (it,n,vv,x,s,z,m) {
+fatmul <- function (it, n, vv, x, s, z, m) {
   fac <- 0.2
 
   l <- 0
