@@ -1,15 +1,10 @@
-Package: glasso_r
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Package: glassor
+Title: Implementation of the glasso algorithm in pure R
+Version: 0.1
+Author: Jon Lachmann
+Maintainer: Jon Lachmann <jon@lachmann.nu>
+Description: Implements the glasso algorithm by Jerome Friedman, Trevor Hastie and Rob Tibshirani in pure R.
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

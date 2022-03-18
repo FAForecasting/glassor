@@ -3,7 +3,7 @@
 #' @return The result with the lowest ebic
 #' @export
 glassor.select <- function (results) {
-  ebic <- lapply(results, ebic.glasso)
+  ebic <- lapply(results, ebic.glassor)
   best <- which.min(ebic)
   return(results[[best]])
 }
@@ -12,8 +12,9 @@ glassor.select <- function (results) {
 #' @param res The result
 #' @return The ebic of res
 #' @export
-ebic.glasso <- function (res) {
+ebic.glassor <- function (res) {
+  df <- sum(res$wi[lower.tri(res$wi)] != 0)
   d <- ncol(res$w)
-  ebic <- -res$nobs * res$loglik + log(res$nobs) * res$df + 4 * ebic.gamma * log(d) * res$df
+  ebic <- -2 * res$loglik + log(res$nobs) * df + 4 * res$rho[1] * log(d) * df
   return(ebic)
 }

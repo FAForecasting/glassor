@@ -33,6 +33,8 @@ test_that("Tests glasso path, single and multi threaded", {
       glassor_res <- glassorpath(s_observed, rho, nobs=nobs)
       glassor_res <- glassorpath(s_observed, rho, nobs=nobs, parallel=TRUE)
 
+      select_res <- glassor.select(glassor_res)
+
 
       expect_equal(glassor_res$w, glasso_res$w, tolerance = 8e-3)
       expect_equal(glassor_res$wi, glasso_res$wi, tolerance = 8e-3)
