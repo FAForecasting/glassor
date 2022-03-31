@@ -1,7 +1,9 @@
 Package: glassor
 Title: Implementation of the glasso algorithm in pure R
 Version: 0.1
-Author: Jon Lachmann
+Authors@R: c(
+    person("Indicio Technologies AB", email = "info@indicio.com", role=c("aut")),
+	person("Jon", "Lachmann", email = "jon@indicio.com", role = c("aut", "cre")))
 Maintainer: Jon Lachmann <jon@lachmann.nu>
 Description: Implements the glasso algorithm by Jerome Friedman, Trevor Hastie and Rob Tibshirani in pure R.
 License: GPL (>= 3)
