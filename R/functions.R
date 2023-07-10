@@ -86,7 +86,7 @@ inv <- function (n, ww, xs, wwi) {
   xs <- -xs
   wwi[1,1] <- 1 / (ww[1,1] + sum(xs[,1] * ww[2:n,1]))
   wwi[2:n,1] <- wwi[1,1] * xs[,1]
-  wwi[n,n]  <- 1/ (ww[n,n] + sum(xs[,n] * ww[1:nm1,n]))
+  wwi[n,n]  <- 1 / (ww[n,n] + sum(xs[,n] * ww[1:nm1,n]))
   wwi[1:nm1,n] <- wwi[n,n] * xs[,n]
 
   if (nm1 >= 2) {

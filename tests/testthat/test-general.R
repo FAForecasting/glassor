@@ -10,9 +10,9 @@ test_that("Tests to that the results are equivalent to glasso", {
       glassor_res <- glassor(s_observed, rho, nobs=nobs)
       glasso_res <- glasso::glasso(s_observed, rho, nobs=nobs)
 
-      expect_equal(glassor_res$w, glasso_res$w, tolerance = 8e-3)
-      expect_equal(glassor_res$wi, glasso_res$wi, tolerance = 8e-3)
-      expect_equal(glassor_res$loglik / glasso_res$loglik, 1, tolerance = 5e-3)
+      expect_equal(glassor_res$w, glasso_res$w, tolerance = 8e-7)
+      expect_equal(glassor_res$wi, glasso_res$wi, tolerance = 8e-7)
+      expect_equal(glassor_res$loglik / glasso_res$loglik, 1, tolerance = 5e-7)
 
       cat(j)
 
@@ -46,4 +46,3 @@ test_that("Tests glasso path, single and multi threaded", {
     cat(i)
   }
 })
-

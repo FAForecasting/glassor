@@ -82,20 +82,8 @@ loglik <- function (s, rho, nobs, W.inverse, penalize.diagonal) {
   nc <- res$nc
   ic <- res$ic
   ir <- res$ir
-
-  nnq <- 0
-  for (kc in 1:nc) {
-    nnq <- max(ic[2,kc] - ic[1,kc] + 1, nnq)
-  }
   # 10031
-  nnq <- nnq^2
-  ss <- numeric(nnq)
-  rho <- numeric(nnq)
-  ww <- numeric(nnq)
-  wwi <- numeric(nnq)
-
   iter <- 0
-  l <- 0
   #10041
   for (kc in 1:nc) {
     n <- ic[2, kc] - ic[1, kc] + 1
@@ -109,19 +97,12 @@ loglik <- function (s, rho, nobs, W.inverse, penalize.diagonal) {
       # 10061
       kbegin <- ic[1, kc]
       kend <- ic[2, kc]
-      l <- 0
-      for (k in kbegin:kend) {
-        ik <- ir[k]
-        for (j in kbegin:kend) {
-          ij <- ir[j]
-          l <- l+1
-          ss[l] <- s[ij, ik]
-          rho[l] <- rrho[ij,ik]
-          ww[l] <- W[ij, ik]
-          wwi[l] <- W.inv[ij, ik]
-        }
-        #10081
-      }
+
+      ss <- s[ir[kbegin:kend], ir[kbegin:kend]]
+      rho <- rrho[ir[kbegin:kend], ir[kbegin:kend]]
+      ww <- W[ir[kbegin:kend], ir[kbegin:kend]]
+      wwi <- W.inv[ir[kbegin:kend], ir[kbegin:kend]]
+
       #10071
       res <- lasinv1(n, ss, rho, FALSE, warm.start, trace, penalize.diag, threshold, maxit, ww, wwi, iter)
       ww <- res$ww
@@ -131,28 +112,13 @@ loglik <- function (s, rho, nobs, W.inverse, penalize.diagonal) {
       for (j in kbegin:kend) {
         k <- ir[j]
         W[, k] <- 0
-        W[k,] <- 0
+        W[k, ] <- 0
         W.inv[, k] <- 0
-        W.inv[k,] <- 0
+        W.inv[k, ] <- 0
       }
       #10091
-      l <- 0
-      for (k in kbegin:kend) {
-        ik <- ir[k]
-        for (j in kbegin:kend) {
-          l <- l+1
-          W.inv[ir[j], ik] <- wwi[l]
-        }
-      }
-      #10111
-      l <- 0
-      for (k in kbegin:kend) {
-        ik <- ir[k]
-        for (j in kbegin:kend) {
-          l <- l+1
-          W[ir[j], ik] <- ww[l]
-        }
-      }
+      W.inv[ir[kbegin:kend], ir[kbegin:kend]] <- wwi
+      W[ir[kbegin:kend], ir[kbegin:kend]] <- ww
     }
   }
   # 10041
