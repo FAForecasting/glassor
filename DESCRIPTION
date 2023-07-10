@@ -1,6 +1,6 @@
 Package: glassor
 Title: Implementation of the glasso algorithm in pure R
-Version: 0.1
+Version: 0.2
 Authors@R: c(
     person("Indicio Technologies AB", email = "info@indicio.com", role=c("aut")),
 	person("Jon", "Lachmann", email = "jon@indicio.com", role = c("aut", "cre")))
